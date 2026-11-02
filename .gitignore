@@ -1,0 +1,22 @@
+cat << 'EOF' > .gitignore
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+engine
+
+# Architecture-specific files
+*.test
+*.out
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+EOF
