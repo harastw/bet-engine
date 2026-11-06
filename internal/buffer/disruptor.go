@@ -34,7 +34,6 @@ func NewDisruptorBuffer(sizeLog2 uint32) *DisruptorBuffer {
 func (db *DisruptorBuffer) Publish(id, userID uint64, amount int64, odds float64) bool {
 	nextWrite := atomic.AddUint64(&db.writeSeq, 1)
 
-	// Backpressure: если буфер забит, уступаем кванты времени CPU
 	for nextWrite-atomic.LoadUint64(&db.readSeq) > db.capacity {
 		runtime.Gosched()
 	}
@@ -51,7 +50,7 @@ func (db *DisruptorBuffer) Publish(id, userID uint64, amount int64, odds float64
 
 func (db *DisruptorBuffer) StartConsumer(ctx context.Context, processFn func(event *BetEvent)) {
 	go func() {
-		runtime.LockOSThread() // Намертво привязываем горутину к системному потоку ОС
+		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
 		localReadSeq := uint64(0)
@@ -65,7 +64,6 @@ func (db *DisruptorBuffer) StartConsumer(ctx context.Context, processFn func(eve
 					localReadSeq++
 					idx := localReadSeq & db.mask
 
-					// Единственная бизнес-логика (мутация стейта) без Mutex-блокировок
 					processFn(&db.ring[idx])
 
 					atomic.StoreUint64(&db.readSeq, localReadSeq)
